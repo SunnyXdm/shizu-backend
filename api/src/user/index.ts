@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
-import { showRoutes } from 'hono/dev';
-import { createHash, verifyHash } from '../lib/hash';
-import User from '../models/User';
-import Otp from '../models/Otp';
-import { createJwt } from '../lib/jwt';
-import sendOtp from '../lib/otp';
+import { createHash, verifyHash } from '../../lib/hash';
+import User from '../../models/User';
+import Otp from '../../models/Otp';
+import { createJwt } from '../../lib/jwt';
+import sendOtp from '../../lib/otp';
 
 const user = new Hono();
 
@@ -41,7 +40,7 @@ user.post('/register', async ({ json, req }) => {
 			otp: otpHash,
 			userId: newUser._id,
 		});
-		sendOtp(otp, newUser.toJSON());
+		await sendOtp(otp, newUser.toJSON());
 
 		return json(
 			{

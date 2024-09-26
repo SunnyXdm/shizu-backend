@@ -3,15 +3,18 @@ import { showRoutes } from 'hono/dev';
 import { logger } from 'hono/logger';
 import { connect } from 'mongoose';
 import user from './src/user';
+import chat from './src/chat';
+import { jwt } from 'hono/jwt';
+import type { JwtVariables } from 'hono/jwt';
+import { JWT_SECRET, MONGO_URI } from './config';
+import message from './src/message';
 
-await connect(
-	process.env.MONGO_URI || 'mongodb://localhost:27017/hono',
-	{}
-).then(() => {
+await connect(MONGO_URI, {}).then(() => {
 	console.log('Connected to MongoDB');
 });
 
-const app = new Hono();
+type Variables = JwtVariables;
+const app = new Hono<{ Variables: Variables }>();
 app.use('*', logger());
 
 app.notFound((c) => {
@@ -19,6 +22,11 @@ app.notFound((c) => {
 });
 
 app.route('/user', user);
+
+app.use('*', jwt({ secret: JWT_SECRET }));
+
+app.route('/chat', chat);
+app.route('/message', message);
 
 showRoutes(app);
 
