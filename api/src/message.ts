@@ -1,17 +1,18 @@
 import { Hono } from 'hono';
-import User from '../../models/User';
-import Message from '../../models/Message';
-import Chat from '../../models/Chat';
+import User from '../models/User';
+import Message from '../models/Message';
+import Chat from '../models/Chat';
 
 const message = new Hono();
 
 message.post('/:id', async ({ json, req, get }) => {
 	try {
 		const user = get('jwtPayload');
+		const chatId = req.param('id');
 		const body = await req.json();
-		const { chat, type, text } = body;
+		const { type, text } = body;
 
-		if (!chat || !type || !text) {
+		if (!chatId || !type || !text) {
 			return json({ status: 'error', message: 'INVALID_INPUTS' }, 400);
 		}
 
@@ -23,7 +24,7 @@ message.post('/:id', async ({ json, req, get }) => {
 		}
 
 		const chatExist = await Chat.findOne({
-			_id: chat,
+			_id: chatId,
 			users: { $in: [user.id] },
 		});
 
@@ -33,7 +34,7 @@ message.post('/:id', async ({ json, req, get }) => {
 
 		const message = await Message.create({
 			from: user.id,
-			chat,
+			chat: chatId,
 			type: 'text',
 			text,
 		});
@@ -67,7 +68,7 @@ message.get('/:id', async ({ json, req, get }) => {
 		const chat = await Chat.findOne({
 			_id: id,
 			users: { $in: [user.id] },
-		});
+		}).lean();
 
 		if (!chat) {
 			return json({ status: 'error', message: 'CHAT_NOT_FOUND' }, 404);
@@ -83,9 +84,9 @@ message.get('/:id', async ({ json, req, get }) => {
 			createdAt: { $gt: lastTimeStamp },
 		})
 			.sort({ createdAt: 1 })
-			.limit(max);
+			.limit(max)
 
-		return json({ status: 'success', data: { messages } });
+		return json({ status: 'success', data: { messages: messages } });
 	} catch (error) {
 		console.log(error);
 	}

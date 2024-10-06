@@ -1,4 +1,16 @@
 import { Schema, model } from 'mongoose';
+interface User extends Document {
+	firstName: string;
+	lastName?: string;
+	username?: string;
+	mobile: string;
+	password: string;
+	isVerified: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+	// methods
+	getFullName(): string;
+}
 const userSchema = new Schema(
 	{
 		firstName: {
@@ -27,9 +39,17 @@ const userSchema = new Schema(
 			default: false,
 		},
 	},
-	{ timestamps: true }
+	{
+		timestamps: true,
+		methods: {
+			getFullName: function () {
+				if (!this.lastName) return this.firstName;
+				return `${this.firstName} ${this.lastName}`;
+			},
+		},
+	}
 );
 
-const User = model('User', userSchema);
+const userModel = model<User>('User', userSchema);
 
-export default User;
+export default userModel;
